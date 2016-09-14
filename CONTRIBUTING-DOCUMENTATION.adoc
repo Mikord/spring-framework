@@ -10,6 +10,14 @@ the project root execute the following command:
 
 	./gradlew reference
 
+To build and install to local maven repo run:
+
+	./gradlew install
+
+To deploy to artifactory run install, then set user and password in gradle.properties and run:
+
+	./gradlew uploadArchives
+
 the output will be available at `spring-framework/build/reference/htmlsingle/index.html`
 
 == Live editing
