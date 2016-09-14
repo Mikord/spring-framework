@@ -255,6 +255,16 @@ configure(subprojects - project(":spring-build-src")) { subproject ->
 		logging.captureStandardOutput LogLevel.INFO // suppress "## warnings" message
 	}
 
+	uploadArchives {
+		repositories {
+			mavenDeployer {
+				repository(url: "http://artifactory.cg.ru/artifactory/libs-releases-local") {
+					authentication(userName: "${artifactory_user}", password: "${artifactory_password}")
+				}
+			}
+		}
+	}
+
 	task sourcesJar(type: Jar, dependsOn: classes) {
 		classifier = 'sources'
 		from sourceSets.main.allSource
@@ -401,6 +411,7 @@ project("spring-beans-groovy") {
 
 	// this module's Java and Groovy sources need to be compiled together
 	compileJava.enabled=false
+	uploadArchives.enabled = false
 	sourceSets {
 		main {
 			groovy {
@@ -829,6 +840,7 @@ project("spring-orm") {
 project("spring-orm-hibernate4") {
 	description = "Spring Object/Relational Mapping - Hibernate 4 support"
 	merge.into = project(":spring-orm")
+	uploadArchives.enabled = false
 
 	dependencies {
 		provided(project(":spring-jdbc"))
@@ -848,6 +860,7 @@ project("spring-orm-hibernate4") {
 project("spring-orm-hibernate5") {
 	description = "Spring Object/Relational Mapping - Hibernate 5 support"
 	merge.into = project(":spring-orm")
+	uploadArchives.enabled = false
 
 	dependencies {
 		provided(project(":spring-jdbc"))
@@ -947,6 +960,7 @@ project("spring-webmvc") {
 project("spring-webmvc-tiles2") {
 	description = "Spring Framework Tiles2 Integration"
 	merge.into = project(":spring-webmvc")
+	uploadArchives.enabled = false
 
 	dependencies {
 		provided(project(":spring-context"))
