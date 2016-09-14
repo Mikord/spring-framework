@@ -145,7 +145,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	private final List<StringValueResolver> embeddedValueResolvers = new LinkedList<StringValueResolver>();
 
 	/** BeanPostProcessors to apply in createBean */
-	private final List<BeanPostProcessor> beanPostProcessors = new ArrayList<BeanPostProcessor>();
+	private final List<BeanPostProcessor> beanPostProcessors = Collections.synchronizedList(new ArrayList<BeanPostProcessor>());
 
 	/** Indicates whether any InstantiationAwareBeanPostProcessors have been registered */
 	private boolean hasInstantiationAwareBeanPostProcessors;
@@ -837,8 +837,30 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 * Return the list of BeanPostProcessors that will get applied
 	 * to beans created with this factory.
 	 */
-	public List<BeanPostProcessor> getBeanPostProcessors() {
+	public List<BeanPostProcessor> getBeanPostProcessorsMutable() {
 		return this.beanPostProcessors;
+	}
+
+	/**
+	 * Return the list of BeanPostProcessors that will get applied
+	 * to beans created with this factory.
+	 */
+	public List<BeanPostProcessor> getBeanPostProcessors() {
+		synchronized (beanPostProcessors) {
+			return Collections.unmodifiableList(
+					new ArrayList<BeanPostProcessor>(this.beanPostProcessors)
+			);
+		}
+	}
+
+	public <T> void removePostprocessorsOfType(Class<T> type) {
+		synchronized (beanPostProcessors) {
+			for (Iterator<BeanPostProcessor> it = beanPostProcessors.iterator(); it.hasNext(); ) {
+				if (type.isAssignableFrom(it.next().getClass())) {
+					it.remove();
+				}
+			}
+		}
 	}
 
 	/**
@@ -1054,7 +1076,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 * @param mbd the merged bean definition
 	 */
 	protected void destroyBean(String beanName, Object beanInstance, RootBeanDefinition mbd) {
-		new DisposableBeanAdapter(beanInstance, beanName, mbd, getBeanPostProcessors(), getAccessControlContext()).destroy();
+		new DisposableBeanAdapter(beanInstance, beanName, mbd, getBeanPostProcessorsMutable(), getAccessControlContext()).destroy();
 	}
 
 	@Override
@@ -1625,7 +1647,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	protected boolean requiresDestruction(Object bean, RootBeanDefinition mbd) {
 		return (bean != null &&
 				(DisposableBeanAdapter.hasDestroyMethod(bean, mbd) || (hasDestructionAwareBeanPostProcessors() &&
-						DisposableBeanAdapter.hasApplicableProcessors(bean, getBeanPostProcessors()))));
+						DisposableBeanAdapter.hasApplicableProcessors(bean, getBeanPostProcessorsMutable()))));
 	}
 
 	/**
@@ -1648,7 +1670,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 				// work for the given bean: DestructionAwareBeanPostProcessors,
 				// DisposableBean interface, custom destroy method.
 				registerDisposableBean(beanName,
-						new DisposableBeanAdapter(bean, beanName, mbd, getBeanPostProcessors(), acc));
+						new DisposableBeanAdapter(bean, beanName, mbd, getBeanPostProcessorsMutable(), acc));
 			}
 			else {
 				// A bean with a custom scope...
@@ -1657,7 +1679,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 					throw new IllegalStateException("No Scope registered for scope name '" + mbd.getScope() + "'");
 				}
 				scope.registerDestructionCallback(beanName,
-						new DisposableBeanAdapter(bean, beanName, mbd, getBeanPostProcessors(), acc));
+						new DisposableBeanAdapter(bean, beanName, mbd, getBeanPostProcessorsMutable(), acc));
 			}
 		}
 	}
