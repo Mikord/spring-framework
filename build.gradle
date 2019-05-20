@@ -257,8 +257,8 @@ configure(subprojects - project(":spring-build-src")) { subproject ->
 	uploadArchives {
 		repositories {
 			mavenDeployer {
-				repository(url: "http://artifactory.cg.ru/artifactory/libs-releases-local") {
-					authentication(userName: "${artifactory_user}", password: "${artifactory_password}")
+				repository(url: "http://repo.cg.ru/repository/libs-releases-local") {
+					authentication(userName: "${}", password: "${artifactory_password}")
 				}
 			}
 		}
